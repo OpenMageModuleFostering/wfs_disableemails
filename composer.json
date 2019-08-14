@@ -1,0 +1,16 @@
+{
+    "name": "OpenMageModuleFostering/Wfs_DisableEmails",
+    "type": "magento-module",
+    "license": "Custom",
+    "homepage": "",
+    "description": "This extension allows to disable specific email notifications in Magento.",
+    "authors": [
+    {
+        "name": "WebFlakeStudio",
+        "email": "webflakestudio@gmail.com"
+    }
+],
+    "suggest": {
+        "magento-hackathon/magento-composer-installer": "*"
+    }
+}
