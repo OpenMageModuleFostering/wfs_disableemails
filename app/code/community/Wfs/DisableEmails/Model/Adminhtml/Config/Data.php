@@ -202,7 +202,7 @@ class Wfs_DisableEmails_Model_Adminhtml_Config_Data extends Mage_Adminhtml_Model
                 $clonedConfig->unsConfigId();
                 $clonedConfig->setValue($wfsValue);
                 $clonedConfig->setPath(
-                    Wfs_DisableEmails_Model_Email_Template::XML_PATH_PREFIX . $emailTemplateConfig->getValue()
+                    Wfs_DisableEmails_Model_Email_Template::XML_PATH_PREFIX . '_' .$emailTemplateConfig->getValue()
                 );
 
                 $saveTransaction->addObject($clonedConfig);
@@ -225,7 +225,7 @@ class Wfs_DisableEmails_Model_Adminhtml_Config_Data extends Mage_Adminhtml_Model
                     $clonedConfig = clone $emailTemplateConfig;
                     $clonedConfig->unsConfigId();
                     $clonedConfig->setPath(
-                        Wfs_DisableEmails_Model_Email_Template::XML_PATH_PREFIX . $templateId
+                        Wfs_DisableEmails_Model_Email_Template::XML_PATH_PREFIX . '_' .$templateId
                     );
                     $saveTransaction->addObject($clonedConfig);
                 }

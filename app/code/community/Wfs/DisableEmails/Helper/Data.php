@@ -38,7 +38,11 @@ class Wfs_DisableEmails_Helper_Data extends Mage_Core_Helper_Abstract
      */
     public function isDisabled($templateId)
     {
-        $path = Wfs_DisableEmails_Model_Email_Template::XML_PATH_PREFIX . $templateId;
+        $path = Wfs_DisableEmails_Model_Email_Template::XML_PATH_PREFIX;
+        if (is_numeric($templateId)) {
+            $path .= '_';
+        }
+        $path .= $templateId;
         return '1' === Mage::getStoreConfig($path);
     }
 }
