@@ -1,21 +1,21 @@
 <?php
 /**
- * WebFlakeStudio
+ * MageryThemes
  *
  * NOTICE OF LICENSE
  *
  * This source file is subject to the EULA
  * that is bundled with this package in the file LICENSE.txt.
  * It is also available through the world-wide-web at this URL:
- * http://webflakestudio.com/WFS-LICENSE-COMMUNITY.txt
+ * http://magery-themes.com/MAGERY-LICENSE.txt
  *
  *
  * MAGENTO EDITION USAGE NOTICE
  *
  * This package designed for Magento COMMUNITY edition
- * WebFlakeStudio does not guarantee correct work of this extension
+ * MageryThemes does not guarantee correct work of this extension
  * on any other Magento edition except Magento COMMUNITY edition.
- * WebFlakeStudio does not provide extension support in case of
+ * MageryThemes does not provide extension support in case of
  * incorrect edition usage.
  *
  * DISCLAIMER
@@ -25,8 +25,8 @@
  *
  * @category   Wfs
  * @package    Wfs_DisableEmails
- * @copyright  Copyright (c) 2013 WebFlakeStudio (http://webflakestudio.com)
- * @license    http://webflakestudio.com/WFS-LICENSE-COMMUNITY.txt
+ * @copyright  Copyright (c) 2013 MageryThemes (http://magery-themes.com)
+ * @license    http://magery-themes.com/MAGERY-LICENSE.txt
  */
 class Wfs_DisableEmails_Model_Adminhtml_Config_Data extends Mage_Adminhtml_Model_Config_Data
 {
@@ -38,6 +38,8 @@ class Wfs_DisableEmails_Model_Adminhtml_Config_Data extends Mage_Adminhtml_Model
      */
     public function save()
     {
+        $emailTemplateSettings = array();
+
         $this->_validate();
         $this->_getScope();
 
@@ -183,6 +185,50 @@ class Wfs_DisableEmails_Model_Adminhtml_Config_Data extends Mage_Adminhtml_Model
                     $dataObject->unsConfigId();
                     $saveTransaction->addObject($dataObject);
                 }
+
+                if ($this->hasEmailTemplateSetting($dataObject)) {
+                    $emailTemplateSettings []= $dataObject;
+                }
+            }
+        }
+
+        foreach ($emailTemplateSettings as $emailTemplateConfig) {
+            if (strpos($emailTemplateConfig->getPath(), 'wfs') === false) {
+                // Not WFS setting, lookup WFS config
+                $wfsPath = Wfs_DisableEmails_Model_Email_Template::XML_PATH_PREFIX
+                    . str_replace('/', '_', $emailTemplateConfig->getPath());
+                $wfsValue = Mage::getStoreConfig($wfsPath);
+                $clonedConfig = clone $emailTemplateConfig;
+                $clonedConfig->unsConfigId();
+                $clonedConfig->setValue($wfsValue);
+                $clonedConfig->setPath(
+                    Wfs_DisableEmails_Model_Email_Template::XML_PATH_PREFIX . $emailTemplateConfig->getValue()
+                );
+
+                $saveTransaction->addObject($clonedConfig);
+            } else {
+                // Saving of WFS config
+                $searchPath = str_replace(
+                    Wfs_DisableEmails_Model_Email_Template::XML_PATH_PREFIX, '', $emailTemplateConfig->getPath()
+                );
+                /** @var Mage_Core_Model_Resource_Config_Data_Collection $collection */
+                $collection = Mage::getResourceModel('core/config_data_collection');
+                $collection->addFieldToFilter('scope', $emailTemplateConfig->getScope());
+                $collection->addFieldToFilter('scope_id', $emailTemplateConfig->getScopeId());
+                $collection->getSelect()
+                    ->where("REPLACE(path, '/', '_') = ?", $searchPath)
+                    ->limit(1);
+
+                $coreConfigRow = $collection->getFirstItem();
+                if ($coreConfigRow->getId() && $coreConfigRow->getValue()) {
+                    $templateId = $coreConfigRow->getValue();
+                    $clonedConfig = clone $emailTemplateConfig;
+                    $clonedConfig->unsConfigId();
+                    $clonedConfig->setPath(
+                        Wfs_DisableEmails_Model_Email_Template::XML_PATH_PREFIX . $templateId
+                    );
+                    $saveTransaction->addObject($clonedConfig);
+                }
             }
         }
 
@@ -190,5 +236,21 @@ class Wfs_DisableEmails_Model_Adminhtml_Config_Data extends Mage_Adminhtml_Model
         $saveTransaction->save();
 
         return $this;
+    }
+
+    /**
+     * @param Mage_Core_Model_Config_Data $dataObject
+     *
+     * @return bool
+     */
+    public function hasEmailTemplateSetting($dataObject)
+    {
+        $emailSettings = array('checkout_payment_failed_template', 'moneybookers_activateemail');
+        $hasEmailPrefix = (
+            strpos(str_replace('/', '_', $dataObject->getPath()), '_email') !== false
+            || in_array($dataObject->getPath(), $emailSettings)
+        );
+
+        return $hasEmailPrefix && is_numeric($dataObject->getValue());
     }
 }
