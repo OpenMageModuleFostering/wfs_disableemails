@@ -1,5 +1,5 @@
 {
-    "name": "OpenMageModuleFostering\/Wfs_DisableEmails",
+    "name": "openmage-module-fostering\/wfs_disableemails",
     "type": "magento-module",
     "license": "Custom",
     "homepage": "",
